@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEOTME, S.L. | GIS Smart Solutions & Remote Sensing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#090d16',
+                            card: '#111827',
+                            border: '#1f2937',
+                            teal: '#0ea5e9',
+                            cyan: '#06b6d4',
+                            amber: '#f59e0b',
+                            gold: '#fbbf24',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f3f4f6;
+        }
+        .glow-teal {
+            box-shadow: 0 0 25px -5px rgba(14, 165, 233, 0.3);
+        }
+        .glow-gold {
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(14, 165, 233, 0.12) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        /* Custom Leaflet Map styling for Dark Theme */
+        .leaflet-container {
+            background: #0d131f !important;
+            font-family: 'Inter', sans-serif;
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #111827 !important;
+            color: #f3f4f6 !important;
+            border: 1px solid #374151;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="bg-brand-dark text-gray-100 antialiased selection:bg-brand-teal selection:text-white">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-brand-dark/90 backdrop-blur-md border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Brand Logo -->
+                <a href="#" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-teal to-brand-amber p-0.5 transition-transform group-hover:scale-105">
+                        <div class="w-full h-full bg-brand-dark rounded-[10px] flex items-center justify-center">
+                            <i class="fa-solid fa-earth-americas text-brand-teal group-hover:text-brand-amber transition-colors"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-black tracking-wider text-white">GEOTME<span class="text-brand-amber">, S.L.</span></span>
+                        <p class="text-[10px] font-semibold tracking-widest text-brand-teal uppercase -mt-1">GIS Smart Solutions</p>
+                    </div>
+                </a>
+
+                <!-- Nav Links Desktop -->
+                <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                    <a href="#servicios" class="hover:text-brand-teal transition-colors">Servicios</a>
+                    <a href="#visor-gis" class="hover:text-brand-teal transition-colors">Visor GIS Demo</a>
+                    <a href="#sectores" class="hover:text-brand-teal transition-colors">Sectores</a>
+                    <a href="#tecnologia" class="hover:text-brand-teal transition-colors">Tecnología</a>
+                    <a href="#calculadora" class="hover:text-brand-teal transition-colors">Presupuesto</a>
+                    <a href="#nosotros" class="hover:text-brand-teal transition-colors">Nosotros</a>
+                </div>
+
+                <!-- Action Button -->
+                <div class="hidden md:flex items-center">
+                    <a href="#contacto" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-brand-teal to-brand-cyan text-white font-semibold shadow-lg shadow-brand-teal/20 hover:brightness-110 transition-all text-sm">
+                        <i class="fa-solid fa-paper-plane mr-2"></i>Contactar
+                    </a>
+                </div>
+
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-white focus:outline-none">
+                    <i class="fa-solid fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-brand-card border-b border-gray-800 px-4 pt-2 pb-6 space-y-3">
+            <a href="#servicios" class="block py-2 text-gray-300 hover:text-brand-teal">Servicios</a>
+            <a href="#visor-gis" class="block py-2 text-gray-300 hover:text-brand-teal">Visor GIS Demo</a>
+            <a href="#sectores" class="block py-2 text-gray-300 hover:text-brand-teal">Sectores</a>
+            <a href="#tecnologia" class="block py-2 text-gray-300 hover:text-brand-teal">Tecnología</a>
+            <a href="#calculadora" class="block py-2 text-gray-300 hover:text-brand-teal">Presupuesto</a>
+            <a href="#nosotros" class="block py-2 text-gray-300 hover:text-brand-teal">Nosotros</a>
+            <a href="#contacto" class="block py-2.5 text-center rounded-lg bg-brand-teal text-white font-semibold">Contactar</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden bg-grid-pattern">
+        <!-- Ambient Glow Elements -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-brand-teal/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="absolute top-1/3 right-10 w-[300px] h-[300px] bg-brand-amber/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-4xl mx-auto space-y-6">
+                <!-- Badge -->
+                <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-brand-teal/10 border border-brand-teal/30 text-brand-teal text-xs font-semibold uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-brand-teal animate-ping"></span>
+                    <span>Inteligencia Espacial & Geomática Avanzada</span>
+                </div>
+
+                <!-- Main Heading -->
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-tight">
+                    Soluciones <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal via-brand-cyan to-brand-amber">GIS Inteligentes</span> y Teledetección de Precisión
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="text-lg sm:text-xl text-gray-300 font-normal max-w-3xl mx-auto leading-relaxed">
+                    En <strong class="text-white">GEOTME, S.L.</strong> transformamos datos geoespaciales complejos obtenidos mediante <span class="text-brand-gold font-medium">drones, satélites y sensores IoT</span> en cuadros de mando operativos, gemelos digitales y mapas interactivos de alto valor estratégico.
+                </p>
+
+                <!-- CTA Buttons -->
+                <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="#visor-gis" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-teal to-brand-cyan text-white font-bold shadow-lg shadow-brand-teal/25 hover:scale-105 transition-all text-center">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i>Explorar Visor GIS
+                    </a>
+                    <a href="#calculadora" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-brand-card hover:bg-gray-800 border border-gray-700 text-gray-200 font-bold transition-all text-center">
+                        <i class="fa-solid fa-calculator mr-2 text-brand-amber"></i>Calcular Presupuesto Drone
+                    </a>
+                </div>
+
+                <!-- Highlights Stats -->
+                <div class="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-gray-800/80 mt-12">
+                    <div class="p-4 rounded-xl bg-brand-card/50 border border-gray-800">
+                        <div class="text-3xl font-extrabold text-brand-teal">RTK / PPK</div>
+                        <div class="text-xs text-gray-400 mt-1">Precisión Centimétrica</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/50 border border-gray-800">
+                        <div class="text-3xl font-extrabold text-brand-amber">+50.000 Ha</div>
+                        <div class="text-xs text-gray-400 mt-1">Mapeadas y Analizadas</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/50 border border-gray-800">
+                        <div class="text-3xl font-extrabold text-brand-teal">WebGIS 3D</div>
+                        <div class="text-xs text-gray-400 mt-1">Dashboards a Medida</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/50 border border-gray-800">
+                        <div class="text-3xl font-extrabold text-brand-amber">LiDAR & Crop</div>
+                        <div class="text-xs text-gray-400 mt-1">Teledetección Multiespectral</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES SECTION -->
+    <section id="servicios" class="py-20 bg-brand-dark border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-extrabold text-brand-teal uppercase tracking-widest mb-2">Servicios Especializados</h2>
+                <h3 class="text-3xl sm:text-4xl font-bold text-white">Nuestras Capacidades Geoespaciales</h3>
+                <p class="text-gray-400 mt-4">Ofrecemos soluciones integrales desde la adquisición de datos en campo hasta el desarrollo de plataformas WebGIS personalizadas.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service 1 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal mb-6 group-hover:bg-brand-teal group-hover:text-white transition-all">
+                        <i class="fa-solid fa-layer-group text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Sistemas de Información Geográfica (GIS)</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Modelado de bases de datos espaciales, análisis vectorial/raster avanzado y automatización de procesos mediante Python y PostGIS.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Bases de Datos PostGIS/SDE</li>
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Modelos Digitales de Terreno (MDT/MDS)</li>
+                    </ul>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-amber/10 border border-brand-amber/30 flex items-center justify-center text-brand-amber mb-6 group-hover:bg-brand-amber group-hover:text-white transition-all">
+                        <i class="fa-solid fa-plane-slant text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Fotogrametría y Drones</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Levantamientos topográficos de alta precisión con drones RTK/PPK. Generación de ortomosaicos, nubes de puntos y modelos 3D.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Ortomosaicos de Alta Resolución</li>
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Clasificación de Nubes de Puntos LiDAR</li>
+                    </ul>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal mb-6 group-hover:bg-brand-teal group-hover:text-white transition-all">
+                        <i class="fa-solid fa-satellite text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Teledetección y Mapeo Agrícola</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Procesamiento de imágenes satelitales (Sentinel, Landsat) y sensores multiespectrales para monitorizar cultivos, bosques y recursos hídricos.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Índices de Vegetación (NDVI, NDWI, EVI)</li>
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Detección de Estrés Hídrico y Plagas</li>
+                    </ul>
+                </div>
+
+                <!-- Service 4 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-amber/10 border border-brand-amber/30 flex items-center justify-center text-brand-amber mb-6 group-hover:bg-brand-amber group-hover:text-white transition-all">
+                        <i class="fa-solid fa-desktop text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Plataformas WebGIS & GeoDashboards</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Desarrollo de visores cartográficos web interactivos y cuadros de mando adaptados para la toma de decisiones corporativas.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Visores Leaflet / Mapbox / OpenLayers</li>
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Integración con APIs REST y Geoserver</li>
+                    </ul>
+                </div>
+
+                <!-- Service 5 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal mb-6 group-hover:bg-brand-teal group-hover:text-white transition-all">
+                        <i class="fa-solid fa-city text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Smart Cities & Smart Campus</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Gestión inteligente de inventarios urbanos, redes de suministros, movilidad e infraestructuras complejas universitarias e industriales.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Inventario de Activos y Redes</li>
+                        <li><i class="fa-solid fa-check text-brand-amber mr-2"></i>Modelado 3D e Integración BIM-GIS</li>
+                    </ul>
+                </div>
+
+                <!-- Service 6 -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800 hover:border-brand-teal/50 transition-all hover:-translate-y-1 group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-amber/10 border border-brand-amber/30 flex items-center justify-center text-brand-amber mb-6 group-hover:bg-brand-amber group-hover:text-white transition-all">
+                        <i class="fa-solid fa-tree text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Consultoría Ambiental & Recursos</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Evaluaciones de impacto ambiental, estudios de inundabilidad, riesgo de incendios y planificación del uso del suelo.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Análisis Hídrico y Cuencas</li>
+                        <li><i class="fa-solid fa-check text-brand-teal mr-2"></i>Gestión de Espacios Protegidos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE MAP / VISOR GIS SHOWCASE -->
+    <section id="visor-gis" class="py-20 bg-brand-dark/50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4">
+                <div>
+                    <div class="inline-flex items-center space-x-2 text-brand-amber font-semibold text-xs tracking-wider uppercase mb-1">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Demostración Interactiva</span>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white">Visor Geoespacial GEOTME</h2>
+                    <p class="text-gray-400 text-sm mt-1">Interactúa con nuestras capas simuladas de vuelos con dron, índices de vegetación NDVI y activos urbanos inteligentes.</p>
+                </div>
+                <!-- Map Layer Controls -->
+                <div class="flex flex-wrap gap-2">
+                    <button id="btn-layer-ortho" onclick="toggleLayer('ortho')" class="px-3.5 py-2 rounded-lg bg-brand-teal text-white text-xs font-semibold shadow hover:brightness-110 transition-all">
+                        <i class="fa-solid fa-image mr-1.5"></i>Ortomosaico / Satélite
+                    </button>
+                    <button id="btn-layer-ndvi" onclick="toggleLayer('ndvi')" class="px-3.5 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs font-semibold hover:bg-gray-700 transition-all border border-gray-700">
+                        <i class="fa-solid fa-[#10b981] fa-seedling mr-1.5 text-emerald-400"></i>NDVI Salud Vegetal
+                    </button>
+                    <button id="btn-layer-flight" onclick="toggleLayer('flight')" class="px-3.5 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs font-semibold hover:bg-gray-700 transition-all border border-gray-700">
+                        <i class="fa-solid fa-route mr-1.5 text-brand-amber"></i>Ruta de Vuelo Dron
+                    </button>
+                    <button id="btn-layer-assets" onclick="toggleLayer('assets')" class="px-3.5 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs font-semibold hover:bg-gray-700 transition-all border border-gray-700">
+                        <i class="fa-solid fa-location-dot mr-1.5 text-sky-400"></i>Activos Smart City
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map Container Wrapper -->
+            <div class="relative rounded-2xl overflow-hidden border border-gray-800 shadow-2xl bg-brand-card">
+                <div id="gis-map" class="w-full h-[550px] z-10"></div>
+
+                <!-- Overlay Widget Info -->
+                <div class="absolute bottom-4 left-4 z-20 bg-brand-dark/90 backdrop-blur-md p-4 rounded-xl border border-gray-800 max-w-xs hidden sm:block text-xs">
+                    <div class="font-bold text-white mb-1 flex items-center justify-between">
+                        <span><i class="fa-solid fa-circle-info text-brand-teal mr-1"></i> Leyenda del Visor</span>
+                        <span class="text-[10px] text-gray-400">RTK Active</span>
+                    </div>
+                    <div class="space-y-1.5 text-gray-300 mt-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                            <span>NDVI Vigor Alto (&gt;0.7)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                            <span>NDVI Estrés Moderado (0.3 - 0.5)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-brand-amber inline-block"></span>
+                            <span>Trayectoria de Vuelo Dron</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTORS / USE CASES -->
+    <section id="sectores" class="py-20 bg-brand-dark border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-extrabold text-brand-teal uppercase tracking-widest mb-2">Sectores de Aplicación</h2>
+                <h3 class="text-3xl font-bold text-white">Soluciones Diseñadas para Cada Industria</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Sector 1 -->
+                <div class="bg-brand-card rounded-2xl p-6 border border-gray-800 hover:border-gray-700 transition-all">
+                    <div class="h-44 rounded-xl bg-gradient-to-br from-emerald-900/40 to-brand-card flex items-center justify-center mb-6 relative overflow-hidden border border-emerald-900/30">
+                        <i class="fa-solid fa-wheat-awn text-6xl text-emerald-500/40"></i>
+                        <span class="absolute bottom-3 left-3 bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-1 rounded font-semibold border border-emerald-500/30">Agricultura de Precisión</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Sector Agrícola y Forestal</h4>
+                    <p class="text-gray-400 text-sm">
+                        Optimización del riego, dosificación variable de fertilizantes y estimación de cosechas mediante Teledetección y cámaras multiespectrales.
+                    </p>
+                </div>
+
+                <!-- Sector 2 -->
+                <div class="bg-brand-card rounded-2xl p-6 border border-gray-800 hover:border-gray-700 transition-all">
+                    <div class="h-44 rounded-xl bg-gradient-to-br from-brand-teal/20 to-brand-card flex items-center justify-center mb-6 relative overflow-hidden border border-brand-teal/30">
+                        <i class="fa-solid fa-building-user text-6xl text-brand-teal/40"></i>
+                        <span class="absolute bottom-3 left-3 bg-brand-teal/20 text-brand-teal text-xs px-2.5 py-1 rounded font-semibold border border-brand-teal/30">Infraestructuras y Obras</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Ingeniería & Construcción</h4>
+                    <p class="text-gray-400 text-sm">
+                        Control de avance de obras, cálculo de movimiento de tierras (cubaciones) y modelos 3D para inspección técnica de estructuras.
+                    </p>
+                </div>
+
+                <!-- Sector 3 -->
+                <div class="bg-brand-card rounded-2xl p-6 border border-gray-800 hover:border-gray-700 transition-all">
+                    <div class="h-44 rounded-xl bg-gradient-to-br from-brand-amber/20 to-brand-card flex items-center justify-center mb-6 relative overflow-hidden border border-brand-amber/30">
+                        <i class="fa-solid fa-city text-6xl text-brand-amber/40"></i>
+                        <span class="absolute bottom-3 left-3 bg-brand-amber/20 text-brand-amber text-xs px-2.5 py-1 rounded font-semibold border border-brand-amber/30">Smart Cities & Territorio</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Administración Pública y Ciudades</h4>
+                    <p class="text-gray-400 text-sm">
+                        Catastro urbano, inventarios de arbolado y mobiliario urbano, y gestión de planes de movilidad sostenible con plataformas WebGIS.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECH STACK SECTION -->
+    <section id="tecnologia" class="py-16 bg-brand-card/30 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-xs font-extrabold text-brand-amber uppercase tracking-widest mb-3">Ecosistema Tecnológico</h2>
+            <h3 class="text-2xl font-bold text-white mb-10">Herramientas & Formatos de Entrega</h3>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 text-gray-300">
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-database text-brand-teal text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">PostGIS / PostgreSQL</span>
+                </div>
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-map text-brand-amber text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">QGIS / ArcGIS Pro</span>
+                </div>
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-brands fa-python text-brand-teal text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">Python / GDAL / Rasterio</span>
+                </div>
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-[#38bdf8] fa-cube text-sky-400 text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">Pix4D & Metashape</span>
+                </div>
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-cloud-sun text-brand-amber text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">Google Earth Engine</span>
+                </div>
+                <div class="p-4 bg-brand-card rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-file-code text-brand-teal text-2xl mb-2"></i>
+                    <span class="text-xs font-semibold">GeoTIFF, SHP, LAZ, CAD</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BUDGET CALCULATOR / ESTIMATOR -->
+    <section id="calculadora" class="py-20 bg-brand-dark border-t border-gray-800">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-brand-card rounded-3xl p-8 sm:p-12 border border-gray-800 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-brand-teal/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="text-center mb-10">
+                    <span class="px-3 py-1 rounded-full bg-brand-amber/10 border border-brand-amber/30 text-brand-amber text-xs font-semibold uppercase">Estimador Interactivo</span>
+                    <h2 class="text-3xl font-bold text-white mt-3">Calculadora de Presupuesto Estimado</h2>
+                    <p class="text-gray-400 text-sm mt-2">Selecciona la superficie de tu proyecto y los servicios requeridos para obtener una estimación orientativa al instante.</p>
+                </div>
+
+                <form id="calculator-form" class="space-y-6">
+                    <!-- Area Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-gray-200">Superficie del Proyecto (Hectáreas):</label>
+                            <span id="hectares-val" class="text-lg font-extrabold text-brand-teal">25 Ha</span>
+                        </div>
+                        <input type="range" id="hectares-range" min="1" max="200" value="25" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-teal">
+                        <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+                            <span>1 Ha</span>
+                            <span>50 Ha</span>
+                            <span>100 Ha</span>
+                            <span>200+ Ha</span>
+                        </div>
+                    </div>
+
+                    <!-- Service Selection -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-gray-200 block mb-2">Tipo de Levantamiento:</label>
+                            <select id="survey-type" class="w-full bg-brand-dark border border-gray-700 rounded-xl px-4 py-3 text-gray-200 text-sm focus:border-brand-teal outline-none">
+                                <option value="ortho">Fotogrametría Básica (Ortomosaico RGB)</option>
+                                <option value="multispectral">Teledetección Multiespectral (NDVI / Salud)</option>
+                                <option value="lidar">LiDAR 3D Topográfico de Alta Precisión</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-gray-200 block mb-2">Entregable Principal:</label>
+                            <select id="deliverable-type" class="w-full bg-brand-dark border border-gray-700 rounded-xl px-4 py-3 text-gray-200 text-sm focus:border-brand-teal outline-none">
+                                <option value="standard">GeoTIFF + Nube de Puntos Estándar</option>
+                                <option value="cad">Modelo Topográfico CAD / Curvas de Nivel</option>
+                                <option value="webgis">Integración en Dashboard WebGIS Interactivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Result Panel -->
+                    <div class="p-6 rounded-2xl bg-brand-dark/80 border border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+                        <div>
+                            <div class="text-xs text-gray-400">Estimación Orientativa (excl. tasas):</div>
+                            <div id="estimated-cost" class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-amber">450 € - 650 €</div>
+                            <p class="text-[11px] text-gray-500 mt-0.5">*Sujeto a confirmación tras revisión de zona de vuelo y normativa AESA.</p>
+                        </div>
+                        <a href="#contacto" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-teal text-white text-xs font-bold uppercase tracking-wider text-center hover:bg-brand-cyan transition-colors">
+                            Solicitar Oferta Formal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT GEOTME SECTION -->
+    <section id="nosotros" class="py-20 bg-brand-dark/50 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <span class="text-xs font-bold text-brand-teal uppercase tracking-widest">Sobre Nosotros</span>
+                    <h2 class="text-3xl font-bold text-white">GEOTME, S.L. - Innovación Geomática y Pasión por el Territorio</h2>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Nacida con la misión de democratizar y potenciar la inteligencia espacial, <strong>GEOTME, S.L.</strong> reúne a ingenieros en geomática, analistas GIS y pilotos de dron certificados para ofrecer soluciones avanzadas en gestión del territorio.
+                    </p>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Combinamos rigor metodológico en topografía RTK/PPK con las últimas arquitecturas de software WebGIS para garantizar que cada dato geográfico se traduzca en decisiones eficientes para nuestros clientes.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-4 pt-4">
+                        <div class="border-l-2 border-brand-teal pl-4">
+                            <h5 class="text-white font-bold text-sm">Operadores Registrados</h5>
+                            <p class="text-xs text-gray-400">Certificación AESA para operaciones urbanas y rurales.</p>
+                        </div>
+                        <div class="border-l-2 border-brand-amber pl-4">
+                            <h5 class="text-white font-bold text-sm">Calidad Garantizada</h5>
+                            <p class="text-xs text-gray-400">Control de calidad fotogramétrico mediante GCPs terrestres.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Card / Visual -->
+                <div class="bg-brand-card p-8 rounded-3xl border border-gray-800 relative">
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-brand-teal/20 text-brand-teal flex items-center justify-center font-bold text-xl">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold">Precisión Centimétrica</h4>
+                                <p class="text-xs text-gray-400">Equipos de posicionamiento GNSS RTK de doble frecuencia.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-brand-amber/20 text-brand-amber flex items-center justify-center font-bold text-xl">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold">Desarrollo WebGIS Propio</h4>
+                                <p class="text-xs text-gray-400">Plataformas adaptadas sin licencias de terceros recurrentes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT FORM SECTION -->
+    <section id="contacto" class="py-20 bg-brand-dark border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <span class="text-xs font-bold text-brand-teal uppercase tracking-widest">Contacto Directo</span>
+                    <h2 class="text-3xl font-bold text-white mt-2">Hablemos de tu Próximo Proyecto Espacial</h2>
+                    <p class="text-gray-400 text-sm mt-4 leading-relaxed">
+                        ¿Tienes dudas sobre la viabilidad técnica de un vuelo con dron, necesitas un desarrollo WebGIS a medida o un estudio de Teledetección? Ponte en contacto con nuestro equipo técnico.
+                    </p>
+
+                    <div class="mt-8 space-y-4 text-sm text-gray-300">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-envelope text-brand-teal w-5"></i>
+                            <span>contacto@geotme.com</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-phone text-brand-teal w-5"></i>
+                            <span>+34 900 000 000</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-location-dot text-brand-teal w-5"></i>
+                            <span>España - Proyectos a nivel nacional e internacional</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div class="bg-brand-card p-8 rounded-2xl border border-gray-800">
+                    <form id="contact-form" class="space-y-4" onsubmit="handleContactSubmit(event)">
+                        <div>
+                            <label class="text-xs font-medium text-gray-300 block mb-1">Nombre Completo *</label>
+                            <input type="text" required class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-teal outline-none" placeholder="Tu nombre">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-300 block mb-1">Correo Electrónico *</label>
+                            <input type="email" required class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-teal outline-none" placeholder="correo@empresa.com">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-300 block mb-1">Servicio de Interés</label>
+                            <select class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-teal outline-none">
+                                <option>Sistemas GIS / WebGIS</option>
+                                <option>Fotogrametría con Dron</option>
+                                <option>Teledetección Agrícola / Forestal</option>
+                                <option>Smart Cities / Smart Campus</option>
+                                <option>Otro Servicio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-300 block mb-1">Mensaje / Detalle del Proyecto *</label>
+                            <textarea rows="4" required class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-teal outline-none" placeholder="Describe brevemente la ubicación, extensión o requisitos..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-brand-teal to-brand-cyan text-white font-bold text-sm shadow-lg shadow-brand-teal/20 hover:brightness-110 transition-all">
+                            Enviar Consulta
+                        </button>
+                    </form>
+                    <div id="contact-success-msg" class="hidden mt-4 p-3 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs rounded-lg text-center">
+                        <i class="fa-solid fa-circle-check mr-1"></i> ¡Mensaje enviado con éxito! Nos pondremos en contacto a la brevedad.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-brand-dark py-10 border-t border-gray-800 text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-300">GEOTME, S.L.</span>
+                <span>© 2026 Todos los derechos reservados. GIS Smart Solutions.</span>
+            </div>
+            <div class="flex space-x-6 text-gray-400">
+                <a href="#" class="hover:text-brand-teal">Aviso Legal</a>
+                <a href="#" class="hover:text-brand-teal">Política de Privacidad</a>
+                <a href="#" class="hover:text-brand-teal">Cookies</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Initialize Interactive GIS Map (Leaflet)
+        let map, orthoLayer, ndviLayer, flightLayer, assetsLayer;
+
+        function initMap() {
+            // Default view centered around Spain
+            map = L.map('gis-map', {
+                center: [39.986, -0.037],
+                zoom: 14,
+                zoomControl: true
+            });
+
+            // Dark Mode Tile Layer (CartoDB Dark Matter)
+            const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Satellite Ortho Layer (Esri World Imagery)
+            orthoLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri'
+            });
+
+            // Simulated NDVI Heatmap Polyline/Polygons
+            ndviLayer = L.layerGroup();
+            const ndviPoly1 = L.polygon([
+                [39.991, -0.045],
+                [39.995, -0.040],
+                [39.990, -0.032],
+                [39.985, -0.038]
+            ], {
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.4,
+                weight: 2
+            }).bindPopup('<b>Zona Agrícola A</b><br>NDVI Promedio: 0.78 (Vegetación Saludable)');
+
+            const ndviPoly2 = L.polygon([
+                [39.980, -0.042],
+                [39.983, -0.035],
+                [39.978, -0.030]
+            ], {
+                color: '#f59e0b',
+                fillColor: '#f59e0b',
+                fillOpacity: 0.4,
+                weight: 2
+            }).bindPopup('<b>Zona Agrícola B</b><br>NDVI Promedio: 0.42 (Estrés Hídrico Detectado)');
+
+            ndviLayer.addLayer(ndviPoly1);
+            ndviLayer.addLayer(ndviPoly2);
+
+            // Drone Flight Path Vectors
+            flightLayer = L.layerGroup();
+            const flightCoords = [
+                [39.985, -0.042], [39.988, -0.042], [39.988, -0.038],
+                [39.985, -0.038], [39.985, -0.034], [39.988, -0.034]
+            ];
+            const flightPath = L.polyline(flightCoords, {
+                color: '#f59e0b',
+                weight: 3,
+                dashArray: '6, 8'
+            });
+            flightLayer.addLayer(flightPath);
+
+            // Add camera waypoints
+            flightCoords.forEach((coord, idx) => {
+                const marker = L.circleMarker(coord, {
+                    radius: 5,
+                    color: '#0ea5e9',
+                    fillColor: '#090d16',
+                    fillOpacity: 1
+                }).bindPopup(`<b>Waypoint Drone #${idx+1}</b><br>Altitud: 120m AGL`);
+                flightLayer.addLayer(marker);
+            });
+
+            // Smart City Asset Markers
+            assetsLayer = L.layerGroup();
+            const assets = [
+                { lat: 39.986, lng: -0.037, title: "Estación Sensor IoT #101", desc: "Humedad Suelo & Temp" },
+                { lat: 39.989, lng: -0.039, title: "Válvula Riego Inteligente", desc: "Estado: Activo" },
+                { lat: 39.983, lng: -0.034, title: "Punto de Control RTK", desc: "Precisión: < 1.5 cm" }
+            ];
+
+            assets.forEach(a => {
+                const m = L.marker([a.lat, a.lng]).bindPopup(`<b>${a.title}</b><br>${a.desc}`);
+                assetsLayer.addLayer(m);
+            });
+
+            // Enable base layers by default
+            ndviLayer.addTo(map);
+            flightLayer.addTo(map);
+            assetsLayer.addTo(map);
+        }
+
+        // Layer Toggling Logic
+        const layerStates = { ortho: false, ndvi: true, flight: true, assets: true };
+
+        function toggleLayer(layerName) {
+            layerStates[layerName] = !layerStates[layerName];
+            const btn = document.getElementById(`btn-layer-${layerName}`);
+
+            if (layerName === 'ortho') {
+                if (layerStates.ortho) {
+                    map.addLayer(orthoLayer);
+                    btn.classList.replace('bg-gray-800', 'bg-brand-teal');
+                    btn.classList.replace('text-gray-300', 'text-white');
+                } else {
+                    map.removeLayer(orthoLayer);
+                    btn.classList.replace('bg-brand-teal', 'bg-gray-800');
+                    btn.classList.replace('text-white', 'text-gray-300');
+                }
+            } else if (layerName === 'ndvi') {
+                if (layerStates.ndvi) {
+                    map.addLayer(ndviLayer);
+                    btn.classList.replace('bg-gray-800', 'bg-brand-teal');
+                } else {
+                    map.removeLayer(ndviLayer);
+                    btn.classList.replace('bg-brand-teal', 'bg-gray-800');
+                }
+            } else if (layerName === 'flight') {
+                if (layerStates.flight) {
+                    map.addLayer(flightLayer);
+                    btn.classList.replace('bg-gray-800', 'bg-brand-teal');
+                } else {
+                    map.removeLayer(flightLayer);
+                    btn.classList.replace('bg-brand-teal', 'bg-gray-800');
+                }
+            } else if (layerName === 'assets') {
+                if (layerStates.assets) {
+                    map.addLayer(assetsLayer);
+                    btn.classList.replace('bg-gray-800', 'bg-brand-teal');
+                } else {
+                    map.removeLayer(assetsLayer);
+                    btn.classList.replace('bg-brand-teal', 'bg-gray-800');
+                }
+            }
+        }
+
+        // Budget Calculator Logic
+        const hectaresRange = document.getElementById('hectares-range');
+        const hectaresVal = document.getElementById('hectares-val');
+        const surveyType = document.getElementById('survey-type');
+        const deliverableType = document.getElementById('deliverable-type');
+        const estimatedCost = document.getElementById('estimated-cost');
+
+        function updateCalculator() {
+            const ha = parseInt(hectaresRange.value);
+            hectaresVal.textContent = `${ha} Ha`;
+
+            let basePricePerHa = 15;
+            if (surveyType.value === 'multispectral') basePricePerHa = 22;
+            if (surveyType.value === 'lidar') basePricePerHa = 35;
+
+            let extraDeliverable = 100;
+            if (deliverableType.value === 'cad') extraDeliverable = 200;
+            if (deliverableType.value === 'webgis') extraDeliverable = 350;
+
+            const baseTotal = (ha * basePricePerHa) + extraDeliverable + 250; // base mobilization
+            const minCost = Math.round(baseTotal * 0.9);
+            const maxCost = Math.round(baseTotal * 1.25);
+
+            estimatedCost.textContent = `${minCost.toLocaleString('es-ES')} € - ${maxCost.toLocaleString('es-ES')} €`;
+        }
+
+        hectaresRange.addEventListener('input', updateCalculator);
+        surveyType.addEventListener('change', updateCalculator);
+        deliverableType.addEventListener('change', updateCalculator);
+
+        // Contact Form Handling
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            const msg = document.getElementById('contact-success-msg');
+            msg.classList.remove('hidden');
+            e.target.reset();
+            setTimeout(() => {
+                msg.classList.add('hidden');
+            }, 6000);
+        }
+
+        // Initialize map on load
+        window.onload = function() {
+            initMap();
+            updateCalculator();
+        };
+    </script>
+</body>
+</html>
